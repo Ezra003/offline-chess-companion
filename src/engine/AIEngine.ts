@@ -131,12 +131,7 @@ export function getAIMove(
 
   for (const move of sorted) {
     // Clone engine, make move, evaluate
-    const cloned = new ChessEngine(engine.getState().moveHistory.length === 0
-      ? undefined
-      : undefined);
-    // Rebuild state by replaying from FEN
-    const fen = engineToFEN(engine);
-    cloned.reset(fen);
+    const cloned = engine.clone();
     cloned.makeMove(move);
 
     const score = minimax(cloned, depth - 1, -Infinity, Infinity, !isMaximizing);
@@ -150,8 +145,7 @@ export function getAIMove(
   // Add slight randomness for easy
   if (difficulty === 'easy' && bestMove) {
     const candidates = sorted.filter(m => {
-      const cloned = new ChessEngine();
-      cloned.reset(engineToFEN(engine));
+      const cloned = engine.clone();
       cloned.makeMove(m);
       const score = minimax(cloned, 0, -Infinity, Infinity, !isMaximizing);
       return Math.abs(score - bestScore) < 50;
@@ -187,8 +181,7 @@ function minimax(
   if (isMaximizing) {
     let maxEval = -Infinity;
     for (const move of moves) {
-      const cloned = new ChessEngine();
-      cloned.reset(engineToFEN(engine));
+      const cloned = engine.clone();
       cloned.makeMove(move);
       const ev = minimax(cloned, depth - 1, alpha, beta, false);
       maxEval = Math.max(maxEval, ev);
@@ -199,8 +192,7 @@ function minimax(
   } else {
     let minEval = Infinity;
     for (const move of moves) {
-      const cloned = new ChessEngine();
-      cloned.reset(engineToFEN(engine));
+      const cloned = engine.clone();
       cloned.makeMove(move);
       const ev = minimax(cloned, depth - 1, alpha, beta, true);
       minEval = Math.min(minEval, ev);

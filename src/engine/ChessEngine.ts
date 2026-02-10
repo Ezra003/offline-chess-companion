@@ -30,6 +30,16 @@ export class ChessEngine {
     this.state = this.parseFEN(fen || INITIAL_FEN);
   }
 
+  // Clone engine for AI evaluation (performance optimization)
+  clone(): ChessEngine {
+    const cloned = new ChessEngine();
+    cloned.state = this.parseFEN(this.toFEN());
+    cloned.state.moveHistory = [...this.state.moveHistory];
+    cloned.state.positionHistory = [...this.state.positionHistory];
+    cloned.undoneHistory = [];
+    return cloned;
+  }
+
   getState(): GameState {
     return this.state;
   }
