@@ -13,7 +13,7 @@ import { NewGameDialog } from '@/components/chess/NewGameDialog';
 import { SettingsPanel } from '@/components/chess/SettingsPanel';
 import { PGNDialog } from '@/components/chess/PGNDialog';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, Sun, Moon, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSound } from '@/hooks/use-sound';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,14 @@ function loadSettings(): GameSettings {
   } catch { return DEFAULT_SETTINGS; }
 }
 
+function loadDarkMode(): boolean {
+  try {
+    const saved = localStorage.getItem('chess-dark-mode');
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch { return false; }
+}
+
 const Index = () => {
   const { toast } = useToast();
   const { playMove, playCapture, playCheck, playGameEnd } = useSound();
@@ -45,6 +53,7 @@ const Index = () => {
   const [showNewGame, setShowNewGame] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPGN, setShowPGN] = useState(false);
+  const [darkMode, setDarkMode] = useState(loadDarkMode);
 
   const [gameMode, setGameMode] = useState<GameMode>('ai');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -52,8 +61,16 @@ const Index = () => {
   const [clockMode, setClockMode] = useState<ClockMode>('none');
   const [resetKey, setResetKey] = useState(0);
   const [aiThinking, setAiThinking] = useState(false);
+  const [manualFlip, setManualFlip] = useState(false);
 
-  const flipped = playerColor === 'b' && gameMode === 'ai';
+  const autoFlip = playerColor === 'b' && gameMode === 'ai';
+  const flipped = manualFlip ? !autoFlip : autoFlip;
+
+  // Dark mode
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('chess-dark-mode', String(darkMode));
+  }, [darkMode]);
 
   const updateGameState = useCallback(() => {
     setGameState(engine.getState());
@@ -100,6 +117,21 @@ const Index = () => {
     }
   }, [engineTurn, gameMode, playerColor, isGameOver, aiThinking, difficulty, engine, updateGameState]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      switch (e.key.toLowerCase()) {
+        case 'z': if (e.ctrlKey || e.metaKey) { e.preventDefault(); handleUndo(); } break;
+        case 'y': if (e.ctrlKey || e.metaKey) { e.preventDefault(); handleRedo(); } break;
+        case 'n': if (!e.ctrlKey && !e.metaKey) setShowNewGame(true); break;
+        case 'f': if (!e.ctrlKey && !e.metaKey) setManualFlip(p => !p); break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const handleMove = useCallback((move: Move) => {
     engine.makeMove(move);
     updateGameState();
@@ -112,6 +144,7 @@ const Index = () => {
     setDifficulty(options.difficulty);
     setPlayerColor(color);
     setClockMode(options.clockMode);
+    setManualFlip(false);
     engine.reset();
     setResetKey(k => k + 1);
     updateGameState();
@@ -178,6 +211,11 @@ const Index = () => {
     return 'bg-primary/10 text-primary ring-primary/15';
   }, [state.status, engine]);
 
+  const modeLabel = useMemo(() => {
+    if (gameMode === 'local') return '👥 Two Player';
+    return `🤖 vs AI (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`;
+  }, [gameMode, difficulty]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -186,27 +224,49 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
             <span className="text-2xl">♟</span>
-            <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               Chess
             </span>
+            <span className="text-[11px] font-medium text-muted-foreground ml-1 hidden sm:inline">
+              {modeLabel}
+            </span>
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setManualFlip(p => !p)}
+              className="h-9 w-9 p-0 hover:scale-105 transition-transform"
+              title="Flip board (F)"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+            </Button>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setShowPGN(true)}
               className="h-9 w-9 p-0 hover:scale-105 transition-transform"
+              title="PGN"
             >
               <FileText className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setDarkMode(d => !d)}
+              className="h-9 w-9 p-0 hover:scale-105 transition-transform"
+              title="Toggle dark mode"
+            >
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col lg:flex-row gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 flex flex-col lg:flex-row gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full items-start">
         {/* Board section */}
-        <div className="flex flex-col items-center gap-4 flex-shrink-0">
+        <div className="flex flex-col items-center gap-4 flex-shrink-0 mx-auto lg:mx-0">
           <ChessTimer
             clockMode={clockMode}
             activeTurn={engine.getTurn()}
@@ -229,17 +289,40 @@ const Index = () => {
             )}
           </div>
 
-          <Board
-            engine={engine}
-            settings={settings}
-            flipped={flipped}
-            onMove={handleMove}
-            disabled={!isPlayerTurn || engine.isGameOver() || aiThinking}
-          />
+          {/* Board with game-over overlay */}
+          <div className="relative">
+            <Board
+              engine={engine}
+              settings={settings}
+              flipped={flipped}
+              onMove={handleMove}
+              disabled={!isPlayerTurn || engine.isGameOver() || aiThinking}
+            />
+            {/* Game over overlay */}
+            {engine.isGameOver() && (
+              <div className="absolute inset-0 bg-black/40 dark:bg-black/60 rounded-xl flex flex-col items-center justify-center gap-3 animate-fade-in-up backdrop-blur-sm z-20">
+                <div className="text-4xl mb-1">
+                  {state.status === 'checkmate' ? '👑' : '🤝'}
+                </div>
+                <div className="text-xl font-bold text-white drop-shadow-lg">
+                  {state.status === 'checkmate' ? 'Checkmate!' : 'Game Over'}
+                </div>
+                <div className="text-sm text-white/80">
+                  {statusText}
+                </div>
+                <Button
+                  onClick={() => setShowNewGame(true)}
+                  className="mt-2 bg-white text-black hover:bg-white/90 font-semibold shadow-xl"
+                >
+                  New Game
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Side panel */}
-        <div className="flex flex-col gap-4 lg:w-80 w-full animate-fade-in-up">
+        <div className="flex flex-col gap-4 lg:w-80 w-full animate-fade-in-up lg:sticky lg:top-20">
           {/* Captured pieces card */}
           <div className="glass rounded-xl border border-border/60 p-4">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -250,10 +333,13 @@ const Index = () => {
 
           {/* Move list card */}
           <div className="glass rounded-xl border border-border/60 overflow-hidden flex-1">
-            <div className="px-4 py-2.5 border-b border-border/60">
+            <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Moves
               </h3>
+              <span className="text-[10px] text-muted-foreground tabular-nums">
+                {Math.ceil(state.moveHistory.length / 2)} moves
+              </span>
             </div>
             <MoveList moves={state.moveHistory} currentIndex={state.moveHistory.length - 1} />
           </div>
@@ -271,6 +357,14 @@ const Index = () => {
               canRedo={engine.canRedo()}
               gameOver={engine.isGameOver()}
             />
+          </div>
+
+          {/* Keyboard shortcuts hint */}
+          <div className="text-[10px] text-muted-foreground/60 flex flex-wrap gap-x-3 gap-y-0.5 px-1">
+            <span><kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Ctrl+Z</kbd> Undo</span>
+            <span><kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Ctrl+Y</kbd> Redo</span>
+            <span><kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">N</kbd> New</span>
+            <span><kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">F</kbd> Flip</span>
           </div>
         </div>
       </main>

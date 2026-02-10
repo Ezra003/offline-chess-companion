@@ -23,6 +23,10 @@ export interface Move {
   isCastling?: 'K' | 'Q';
   isEnPassant?: boolean;
   san?: string;
+  // Undo state (populated by makeMove for unmakeMove)
+  prevCastlingRights?: CastlingRights;
+  prevEnPassantTarget?: Position | null;
+  prevHalfMoveClock?: number;
 }
 
 export interface CastlingRights {
