@@ -106,53 +106,56 @@ export function Board({ engine, settings, flipped, onMove, disabled }: BoardProp
 
   return (
     <>
-      <div className="grid grid-cols-8 border-2 border-border rounded-sm overflow-hidden aspect-square w-full max-w-[min(80vh,560px)]">
-        {displayRows.map(row =>
-          (flipped ? [...cols].reverse() : cols).map(col => {
-            const piece = board[row][col];
-            const isLight = (row + col) % 2 === 0;
-            const isSelected = selectedPos?.row === row && selectedPos?.col === col;
-            const isLegal = settings.showLegalMoves && legalMoves.some(m => m.to.row === row && m.to.col === col);
-            const isLast = settings.showLastMove && lastMove
-              ? (lastMove.from.row === row && lastMove.from.col === col) ||
-                (lastMove.to.row === row && lastMove.to.col === col)
-              : false;
-            const isCheck = isKingInCheck && kingPos?.row === row && kingPos?.col === col;
+      {/* Board with premium frame */}
+      <div className="board-shadow rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/5">
+        <div className="grid grid-cols-8 aspect-square w-full max-w-[min(80vh,560px)]">
+          {displayRows.map(row =>
+            (flipped ? [...cols].reverse() : cols).map(col => {
+              const piece = board[row][col];
+              const isLight = (row + col) % 2 === 0;
+              const isSelected = selectedPos?.row === row && selectedPos?.col === col;
+              const isLegal = settings.showLegalMoves && legalMoves.some(m => m.to.row === row && m.to.col === col);
+              const isLast = settings.showLastMove && lastMove
+                ? (lastMove.from.row === row && lastMove.from.col === col) ||
+                  (lastMove.to.row === row && lastMove.to.col === col)
+                : false;
+              const isCheck = isKingInCheck && kingPos?.row === row && kingPos?.col === col;
 
-            const FILES = 'abcdefgh';
-            const label = `${FILES[col]}${8 - row}${piece ? ` ${piece.color === 'w' ? 'White' : 'Black'} ${piece.type}` : ''}`;
+              const FILES = 'abcdefgh';
+              const label = `${FILES[col]}${8 - row}${piece ? ` ${piece.color === 'w' ? 'White' : 'Black'} ${piece.type}` : ''}`;
 
-            return (
-              <SquareComponent
-                key={`${row}-${col}`}
-                row={row}
-                col={col}
-                isLight={isLight}
-                isSelected={isSelected}
-                isLegalMove={isLegal}
-                isLastMove={isLast}
-                isCheck={isCheck}
-                showCoordinates={settings.showCoordinates}
-                theme={settings.boardTheme}
-                onClick={() => handleSquareClick(row, col)}
-                onDragOver={e => e.preventDefault()}
-                onDrop={e => handleDrop(e, row, col)}
-                onDragStart={e => handleDragStart(e, row, col)}
-                draggable={!!piece && piece.color === engine.getTurn() && !disabled}
-                ariaLabel={label}
-              >
-                {piece && (
-                  <PieceDisplay
-                    type={piece.type}
-                    color={piece.color}
-                    style={settings.pieceStyle}
-                    isDragging={dragFrom?.row === row && dragFrom?.col === col}
-                  />
-                )}
-              </SquareComponent>
-            );
-          })
-        )}
+              return (
+                <SquareComponent
+                  key={`${row}-${col}`}
+                  row={row}
+                  col={col}
+                  isLight={isLight}
+                  isSelected={isSelected}
+                  isLegalMove={isLegal}
+                  isLastMove={isLast}
+                  isCheck={isCheck}
+                  showCoordinates={settings.showCoordinates}
+                  theme={settings.boardTheme}
+                  onClick={() => handleSquareClick(row, col)}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => handleDrop(e, row, col)}
+                  onDragStart={e => handleDragStart(e, row, col)}
+                  draggable={!!piece && piece.color === engine.getTurn() && !disabled}
+                  ariaLabel={label}
+                >
+                  {piece && (
+                    <PieceDisplay
+                      type={piece.type}
+                      color={piece.color}
+                      style={settings.pieceStyle}
+                      isDragging={dragFrom?.row === row && dragFrom?.col === col}
+                    />
+                  )}
+                </SquareComponent>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {promotionMove && (

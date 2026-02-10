@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Position, BoardTheme } from '@/engine/types';
+import { BoardTheme } from '@/engine/types';
 
 interface SquareProps {
   row: number;
@@ -39,12 +39,27 @@ export function SquareComponent({
   return (
     <div
       className={cn(
-        'relative flex items-center justify-center aspect-square cursor-pointer transition-colors',
+        'relative flex items-center justify-center aspect-square cursor-pointer',
+        'transition-all duration-150 ease-out',
         baseBg,
-        isSelected && 'ring-2 ring-inset ring-yellow-400 bg-yellow-300/40',
-        isLastMove && !isSelected && 'bg-amber-300/30',
-        isCheck && 'bg-red-500/50 ring-2 ring-red-500',
+        // Hover effect: subtle brightness boost
+        !isSelected && !isCheck && 'hover:brightness-110',
+        // Selected square: warm golden highlight
+        isSelected && 'ring-[3px] ring-inset ring-amber-400 brightness-125',
+        // Last move highlight: soft amber wash
+        isLastMove && !isSelected && 'brightness-115',
+        // Check: red pulse glow
+        isCheck && 'animate-check-pulse bg-red-500/40',
       )}
+      style={{
+        // Subtle gradient overlay for depth on each square
+        backgroundImage: isLight
+          ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)'
+          : 'linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.06) 100%)',
+        ...(isLastMove && !isSelected ? {
+          boxShadow: `inset 0 0 0 2px rgba(234, 179, 8, 0.35)`,
+        } : {}),
+      }}
       onClick={onClick}
       onDragOver={onDragOver}
       onDrop={onDrop}
@@ -54,25 +69,28 @@ export function SquareComponent({
       aria-label={ariaLabel}
       tabIndex={0}
     >
+      {/* Legal move dot (empty square) */}
       {isLegalMove && !children && (
-        <div className="w-3 h-3 rounded-full bg-black/20" />
+        <div className="w-[28%] h-[28%] rounded-full bg-black/20 dark:bg-white/20 animate-dot-pulse" />
       )}
+      {/* Legal move ring (capture target) */}
       {isLegalMove && children && (
-        <div className="absolute inset-0 ring-4 ring-inset ring-black/20 rounded-none pointer-events-none" />
+        <div className="absolute inset-[3px] rounded-full ring-[3px] ring-inset ring-black/25 dark:ring-white/25 pointer-events-none" />
       )}
       {children}
+      {/* File/rank coordinates */}
       {showCoordinates && col === 0 && (
         <span className={cn(
-          'absolute top-0.5 left-1 text-[10px] font-bold pointer-events-none',
-          isLight ? 'text-chess-classic-dark/70' : 'text-chess-classic-light/70'
+          'absolute top-[2px] left-[3px] text-[9px] font-semibold pointer-events-none leading-none',
+          isLight ? 'text-chess-classic-dark/60' : 'text-chess-classic-light/50'
         )}>
           {8 - row}
         </span>
       )}
       {showCoordinates && row === 7 && (
         <span className={cn(
-          'absolute bottom-0 right-1 text-[10px] font-bold pointer-events-none',
-          isLight ? 'text-chess-classic-dark/70' : 'text-chess-classic-light/70'
+          'absolute bottom-[1px] right-[3px] text-[9px] font-semibold pointer-events-none leading-none',
+          isLight ? 'text-chess-classic-dark/60' : 'text-chess-classic-light/50'
         )}>
           {FILES[col]}
         </span>

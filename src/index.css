@@ -1,48 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 30 15% 95%;
-    --foreground: 30 10% 10%;
+    font-family: 'Inter', system-ui, sans-serif;
 
-    --card: 30 15% 97%;
-    --card-foreground: 30 10% 10%;
+    --background: 220 20% 97%;
+    --foreground: 220 15% 10%;
 
-    --popover: 30 15% 97%;
-    --popover-foreground: 30 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 10%;
 
-    --primary: 30 10% 18%;
-    --primary-foreground: 30 15% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 10%;
 
-    --secondary: 30 10% 90%;
-    --secondary-foreground: 30 10% 18%;
+    --primary: 152 55% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --muted: 30 10% 92%;
-    --muted-foreground: 30 5% 45%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 15% 18%;
 
-    --accent: 30 10% 88%;
-    --accent-foreground: 30 10% 18%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 8% 46%;
+
+    --accent: 39 90% 52%;
+    --accent-foreground: 39 90% 12%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 10% 85%;
-    --input: 30 10% 85%;
-    --ring: 30 10% 18%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 152 55% 42%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     /* Chess board themes */
-    --chess-classic-light: 80 40% 82%;
-    --chess-classic-dark: 115 30% 42%;
-    --chess-dark-light: 220 5% 60%;
-    --chess-dark-dark: 220 5% 35%;
-    --chess-wood-light: 35 40% 72%;
-    --chess-wood-dark: 25 35% 42%;
-    --chess-white-piece: 30 15% 95%;
-    --chess-black-piece: 30 10% 12%;
+    --chess-classic-light: 80 42% 82%;
+    --chess-classic-dark: 115 32% 44%;
+    --chess-dark-light: 220 8% 62%;
+    --chess-dark-dark: 220 8% 38%;
+    --chess-wood-light: 35 42% 74%;
+    --chess-wood-dark: 25 38% 44%;
+    --chess-white-piece: 0 0% 100%;
+    --chess-black-piece: 220 15% 12%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -55,36 +59,42 @@
   }
 
   .dark {
-    --background: 30 5% 8%;
-    --foreground: 30 10% 92%;
+    --background: 222 22% 8%;
+    --foreground: 220 14% 92%;
 
-    --card: 30 5% 10%;
-    --card-foreground: 30 10% 92%;
+    --card: 222 20% 11%;
+    --card-foreground: 220 14% 92%;
 
-    --popover: 30 5% 10%;
-    --popover-foreground: 30 10% 92%;
+    --popover: 222 20% 11%;
+    --popover-foreground: 220 14% 92%;
 
-    --primary: 30 15% 90%;
-    --primary-foreground: 30 5% 8%;
+    --primary: 152 55% 48%;
+    --primary-foreground: 222 22% 8%;
 
-    --secondary: 30 5% 16%;
-    --secondary-foreground: 30 10% 92%;
+    --secondary: 222 16% 16%;
+    --secondary-foreground: 220 14% 92%;
 
-    --muted: 30 5% 16%;
-    --muted-foreground: 30 5% 55%;
+    --muted: 222 14% 16%;
+    --muted-foreground: 220 8% 55%;
 
-    --accent: 30 5% 16%;
-    --accent-foreground: 30 10% 92%;
+    --accent: 39 85% 55%;
+    --accent-foreground: 222 22% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 30 10% 92%;
+    --destructive: 0 62.8% 35%;
+    --destructive-foreground: 220 14% 92%;
 
-    --border: 30 5% 18%;
-    --input: 30 5% 18%;
-    --ring: 30 10% 80%;
+    --border: 222 14% 18%;
+    --input: 222 14% 18%;
+    --ring: 152 55% 48%;
 
-    --chess-white-piece: 30 10% 90%;
-    --chess-black-piece: 30 5% 15%;
+    --chess-classic-light: 80 38% 78%;
+    --chess-classic-dark: 115 28% 38%;
+    --chess-dark-light: 220 6% 52%;
+    --chess-dark-dark: 220 6% 28%;
+    --chess-wood-light: 35 38% 64%;
+    --chess-wood-dark: 25 32% 36%;
+    --chess-white-piece: 0 0% 95%;
+    --chess-black-piece: 220 10% 18%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -103,6 +113,123 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+}
+
+/* ─── Animations ─────────────────────────────────── */
+@keyframes piece-appear {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes piece-capture {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pulse-check {
+  0%, 100% { box-shadow: inset 0 0 0 3px rgba(239, 68, 68, 0.6); }
+  50% { box-shadow: inset 0 0 18px 2px rgba(239, 68, 68, 0.4); }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.5; }
+  50% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thinking-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes slide-in-captured {
+  0% { opacity: 0; transform: translateX(-6px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px 0 rgba(var(--primary), 0.15); }
+  50% { box-shadow: 0 0 20px 4px rgba(var(--primary), 0.25); }
+}
+
+@keyframes timer-warn {
+  0%, 100% { color: hsl(0 72% 51%); }
+  50% { color: hsl(0 72% 65%); }
+}
+
+/* ─── Utility Classes ────────────────────────────── */
+.glass {
+  background: hsla(var(--card), 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-strong {
+  background: hsla(var(--card), 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.board-shadow {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 20px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.dark .board-shadow {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 20px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.animate-piece-appear {
+  animation: piece-appear 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-piece-capture {
+  animation: piece-capture 0.3s ease-out both;
+}
+
+.animate-check-pulse {
+  animation: pulse-check 1.2s ease-in-out infinite;
+}
+
+.animate-dot-pulse {
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out both;
+}
+
+.animate-thinking {
+  animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+
+.animate-slide-in {
+  animation: slide-in-captured 0.3s ease-out both;
+}
+
+.animate-timer-warn {
+  animation: timer-warn 0.8s ease-in-out infinite;
+}
+
+/* Gradient accent line for header */
+.gradient-accent {
+  background: linear-gradient(90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--accent)) 50%,
+    hsl(var(--primary)) 100%
+  );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PieceColor, ClockMode } from '@/engine/types';
+import { cn } from '@/lib/utils';
 
 interface ChessTimerProps {
   clockMode: ClockMode;
@@ -59,17 +60,32 @@ export function ChessTimer({ clockMode, activeTurn, gameOver, onTimeout, resetKe
 
   if (clockMode === 'none') return null;
 
+  const isWhiteLow = whiteTime <= 30;
+  const isBlackLow = blackTime <= 30;
+
   return (
-    <div className="flex justify-between gap-4">
-      <div className={`px-3 py-1.5 rounded-md font-mono text-lg ${
-        activeTurn === 'b' ? 'bg-primary text-primary-foreground' : 'bg-secondary'
-      }`}>
-        ♚ {formatTime(blackTime)}
+    <div className="flex justify-between gap-3">
+      {/* Black timer */}
+      <div className={cn(
+        'flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-semibold transition-all duration-300',
+        activeTurn === 'b'
+          ? 'bg-foreground text-background shadow-lg scale-105'
+          : 'bg-muted text-muted-foreground',
+        isBlackLow && activeTurn === 'b' && 'animate-timer-warn'
+      )}>
+        <span className="text-xl">♚</span>
+        <span className="tracking-wider">{formatTime(blackTime)}</span>
       </div>
-      <div className={`px-3 py-1.5 rounded-md font-mono text-lg ${
-        activeTurn === 'w' ? 'bg-primary text-primary-foreground' : 'bg-secondary'
-      }`}>
-        ♔ {formatTime(whiteTime)}
+      {/* White timer */}
+      <div className={cn(
+        'flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-semibold transition-all duration-300',
+        activeTurn === 'w'
+          ? 'bg-foreground text-background shadow-lg scale-105'
+          : 'bg-muted text-muted-foreground',
+        isWhiteLow && activeTurn === 'w' && 'animate-timer-warn'
+      )}>
+        <span className="text-xl">♔</span>
+        <span className="tracking-wider">{formatTime(whiteTime)}</span>
       </div>
     </div>
   );

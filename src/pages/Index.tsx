@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ChessEngine } from '@/engine/ChessEngine';
 import { getAIMove } from '@/engine/AIEngine';
 import {
@@ -15,6 +15,8 @@ import { PGNDialog } from '@/components/chess/PGNDialog';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSound } from '@/hooks/use-sound';
+import { cn } from '@/lib/utils';
 
 const DEFAULT_SETTINGS: GameSettings = {
   boardTheme: 'classic',
@@ -35,6 +37,7 @@ function loadSettings(): GameSettings {
 
 const Index = () => {
   const { toast } = useToast();
+  const { playMove, playCapture, playCheck, playGameEnd } = useSound();
   const [engine, setEngine] = useState(() => new ChessEngine());
   const [gameState, setGameState] = useState(() => engine.getState());
 
@@ -52,7 +55,6 @@ const Index = () => {
 
   const flipped = playerColor === 'b' && gameMode === 'ai';
 
-  // Update game state when engine changes
   const updateGameState = useCallback(() => {
     setGameState(engine.getState());
   }, [engine]);
@@ -61,6 +63,24 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('chess-settings', JSON.stringify(settings));
   }, [settings]);
+
+  // Sound effects
+  const prevMoveCount = useMemo(() => gameState.moveHistory.length, [gameState.moveHistory.length]);
+  useEffect(() => {
+    if (!settings.soundEnabled || prevMoveCount === 0) return;
+    const lastMove = gameState.moveHistory[gameState.moveHistory.length - 1];
+    if (!lastMove) return;
+
+    if (engine.isGameOver()) {
+      playGameEnd();
+    } else if (gameState.status === 'check') {
+      playCheck();
+    } else if (lastMove.captured) {
+      playCapture();
+    } else {
+      playMove();
+    }
+  }, [prevMoveCount]);
 
   // AI move
   const engineTurn = engine.getTurn();
@@ -99,7 +119,7 @@ const Index = () => {
 
   const handleUndo = useCallback(() => {
     engine.undo();
-    if (gameMode === 'ai') engine.undo(); // undo AI move too
+    if (gameMode === 'ai') engine.undo();
     updateGameState();
   }, [engine, gameMode, updateGameState]);
 
@@ -152,22 +172,41 @@ const Index = () => {
     }
   }, [state.status, state.turn]);
 
+  const statusStyle = useMemo(() => {
+    if (engine.isGameOver()) return 'bg-red-500/15 text-red-500 dark:text-red-400 ring-red-500/20';
+    if (state.status === 'check') return 'bg-orange-500/15 text-orange-600 dark:text-orange-400 ring-orange-500/20';
+    return 'bg-primary/10 text-primary ring-primary/15';
+  }, [state.status, engine]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">♟ Chess</h1>
-        <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={() => setShowPGN(true)}>
-            <FileText className="h-4 w-4" />
-          </Button>
+      <header className="sticky top-0 z-50 glass-strong border-b border-border/60">
+        <div className="gradient-accent h-[2px]" />
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <span className="text-2xl">♟</span>
+            <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              Chess
+            </span>
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowPGN(true)}
+              className="h-9 w-9 p-0 hover:scale-105 transition-transform"
+            >
+              <FileText className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 max-w-7xl mx-auto w-full">
+      <main className="flex-1 flex flex-col lg:flex-row gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full">
         {/* Board section */}
-        <div className="flex flex-col items-center gap-3 flex-shrink-0">
+        <div className="flex flex-col items-center gap-4 flex-shrink-0">
           <ChessTimer
             clockMode={clockMode}
             activeTurn={engine.getTurn()}
@@ -176,16 +215,18 @@ const Index = () => {
             resetKey={resetKey}
           />
 
-          {/* Status */}
-          <div className={`text-sm font-medium px-3 py-1 rounded-full ${
-            engine.isGameOver()
-              ? 'bg-destructive/10 text-destructive'
-              : state.status === 'check'
-              ? 'bg-orange-500/10 text-orange-600'
-              : 'bg-secondary text-secondary-foreground'
-          }`}>
+          {/* Status pill */}
+          <div className={cn(
+            'text-sm font-semibold px-4 py-1.5 rounded-full ring-1 transition-all duration-300',
+            statusStyle,
+          )}>
             {statusText}
-            {aiThinking && ' • AI thinking...'}
+            {aiThinking && (
+              <span className="ml-2 inline-flex items-center gap-1">
+                <span className="animate-thinking">●</span>
+                <span className="text-muted-foreground font-normal">thinking</span>
+              </span>
+            )}
           </div>
 
           <Board
@@ -198,25 +239,39 @@ const Index = () => {
         </div>
 
         {/* Side panel */}
-        <div className="flex flex-col gap-4 lg:w-72 w-full">
-          <CapturedPieces moves={state.moveHistory} pieceStyle={settings.pieceStyle} />
-          <div className="border rounded-lg overflow-hidden">
-            <div className="px-3 py-2 border-b bg-muted/50">
-              <span className="text-xs font-medium text-muted-foreground">Moves</span>
+        <div className="flex flex-col gap-4 lg:w-80 w-full animate-fade-in-up">
+          {/* Captured pieces card */}
+          <div className="glass rounded-xl border border-border/60 p-4">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Material
+            </h3>
+            <CapturedPieces moves={state.moveHistory} pieceStyle={settings.pieceStyle} />
+          </div>
+
+          {/* Move list card */}
+          <div className="glass rounded-xl border border-border/60 overflow-hidden flex-1">
+            <div className="px-4 py-2.5 border-b border-border/60">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Moves
+              </h3>
             </div>
             <MoveList moves={state.moveHistory} currentIndex={state.moveHistory.length - 1} />
           </div>
-          <GameControls
-            onNewGame={() => setShowNewGame(true)}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            onResign={handleResign}
-            onRestart={handleRestart}
-            onSettings={() => setShowSettings(true)}
-            canUndo={engine.canUndo()}
-            canRedo={engine.canRedo()}
-            gameOver={engine.isGameOver()}
-          />
+
+          {/* Controls */}
+          <div className="glass rounded-xl border border-border/60 p-3">
+            <GameControls
+              onNewGame={() => setShowNewGame(true)}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              onResign={handleResign}
+              onRestart={handleRestart}
+              onSettings={() => setShowSettings(true)}
+              canUndo={engine.canUndo()}
+              canRedo={engine.canRedo()}
+              gameOver={engine.isGameOver()}
+            />
+          </div>
         </div>
       </main>
 
