@@ -35,9 +35,8 @@ function loadSettings(): GameSettings {
 
 const Index = () => {
   const { toast } = useToast();
-  const [engine] = useState(() => new ChessEngine());
-  const [, setTick] = useState(0);
-  const forceUpdate = useCallback(() => setTick(t => t + 1), []);
+  const [engine, setEngine] = useState(() => new ChessEngine());
+  const [gameState, setGameState] = useState(() => engine.getState());
 
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   const [showNewGame, setShowNewGame] = useState(false);
@@ -53,31 +52,38 @@ const Index = () => {
 
   const flipped = playerColor === 'b' && gameMode === 'ai';
 
+  // Update game state when engine changes
+  const updateGameState = useCallback(() => {
+    setGameState(engine.getState());
+  }, [engine]);
+
   // Save settings
   useEffect(() => {
     localStorage.setItem('chess-settings', JSON.stringify(settings));
   }, [settings]);
 
   // AI move
+  const engineTurn = engine.getTurn();
+  const isGameOver = engine.isGameOver();
   useEffect(() => {
-    if (gameMode !== 'ai' || engine.isGameOver()) return;
-    if (engine.getTurn() !== playerColor && !aiThinking) {
+    if (gameMode !== 'ai' || isGameOver) return;
+    if (engineTurn !== playerColor && !aiThinking) {
       setAiThinking(true);
       setTimeout(() => {
         const move = getAIMove(engine, difficulty);
         if (move) {
           engine.makeMove(move);
-          forceUpdate();
+          updateGameState();
         }
         setAiThinking(false);
       }, 200);
     }
-  }, [engine.getTurn(), gameMode, playerColor, engine.isGameOver()]);
+  }, [engineTurn, gameMode, playerColor, isGameOver, aiThinking, difficulty, engine, updateGameState]);
 
   const handleMove = useCallback((move: Move) => {
     engine.makeMove(move);
-    forceUpdate();
-  }, [engine, forceUpdate]);
+    updateGameState();
+  }, [engine, updateGameState]);
 
   const handleNewGame = useCallback((options: NewGameOptions) => {
     let color = options.playerColor;
@@ -88,50 +94,50 @@ const Index = () => {
     setClockMode(options.clockMode);
     engine.reset();
     setResetKey(k => k + 1);
-    forceUpdate();
-  }, [engine, forceUpdate]);
+    updateGameState();
+  }, [engine, updateGameState]);
 
   const handleUndo = useCallback(() => {
     engine.undo();
     if (gameMode === 'ai') engine.undo(); // undo AI move too
-    forceUpdate();
-  }, [engine, gameMode, forceUpdate]);
+    updateGameState();
+  }, [engine, gameMode, updateGameState]);
 
   const handleRedo = useCallback(() => {
     engine.redo();
     if (gameMode === 'ai') engine.redo();
-    forceUpdate();
-  }, [engine, gameMode, forceUpdate]);
+    updateGameState();
+  }, [engine, gameMode, updateGameState]);
 
   const handleResign = useCallback(() => {
     engine.resign();
-    forceUpdate();
-  }, [engine, forceUpdate]);
+    updateGameState();
+  }, [engine, updateGameState]);
 
   const handleRestart = useCallback(() => {
     engine.reset();
     setResetKey(k => k + 1);
-    forceUpdate();
-  }, [engine, forceUpdate]);
+    updateGameState();
+  }, [engine, updateGameState]);
 
   const handleTimeout = useCallback((color: PieceColor) => {
     engine.timeout(color);
-    forceUpdate();
-  }, [engine, forceUpdate]);
+    updateGameState();
+  }, [engine, updateGameState]);
 
   const handlePGNImport = useCallback((pgn: string) => {
     const ok = engine.loadPGN(pgn);
     if (ok) {
       setGameMode('local');
-      forceUpdate();
+      updateGameState();
       toast({ title: 'PGN loaded successfully' });
     } else {
       toast({ title: 'Failed to load PGN', variant: 'destructive' });
     }
-  }, [engine, forceUpdate, toast]);
+  }, [engine, updateGameState, toast]);
 
   const isPlayerTurn = gameMode === 'local' || engine.getTurn() === playerColor;
-  const state = engine.getState();
+  const state = gameState;
 
   const statusText = useMemo(() => {
     switch (state.status) {
