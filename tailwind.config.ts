@@ -57,6 +57,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        chess: {
+          "classic-light": "hsl(var(--chess-classic-light))",
+          "classic-dark": "hsl(var(--chess-classic-dark))",
+          "dark-light": "hsl(var(--chess-dark-light))",
+          "dark-dark": "hsl(var(--chess-dark-dark))",
+          "wood-light": "hsl(var(--chess-wood-light))",
+          "wood-dark": "hsl(var(--chess-wood-dark))",
+          "white-piece": "hsl(var(--chess-white-piece))",
+          "black-piece": "hsl(var(--chess-black-piece))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
